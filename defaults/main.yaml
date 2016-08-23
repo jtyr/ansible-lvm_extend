@@ -1,0 +1,70 @@
+---
+
+# Name of the LVM volume group (autodetected by default)
+lvm_extend_vg: null
+
+# Default set of LVM logical vlumes to be extended
+lvm_extend_config__default: []
+# Example:
+#lvm_extend_config__default:
+#  # Make the swap partition 2GB big
+#  - path: /dev/mapper/{{ lvm_extend_vg }}-swap
+#    size: 2G
+#    type: swap
+#  # If no size specified (only once), it will extend to 100% of the free space
+#  - lv: /dev/mapper/{{ lvm_extend_vg }}-root
+#    type: ext
+
+# Custom set of LVM logical volumes to be extended
+lvm_extend_config__custom: []
+
+# Final set of LVM logical volumes to be extended
+lvm_extend_config: "{{
+  lvm_extend_config__default +
+  lvm_extend_config__custom }}"
+
+# Command to identify the LVM volume group name
+lvm_extend_cmd_autodetect: >
+  {{ lvm_extend_cmd_vgdisplay }} -cA |
+  grep -Po '(?<=  ).[^:]*' |
+  head -n1
+
+# Command to get list of new disks
+lvm_extend_cmd_new: >
+  cat /proc/partitions |
+  grep -P '^\s+\d+\s+\d+\s+\d+\s+sd.*' |
+  awk '{print $4}' |
+  sed 's/[0-9]//' |
+  sort |
+  uniq -c |
+  grep '^\s*1\s' |
+  sed 's/.*\s//'
+
+# Command to create LVM physical volume
+lvm_extend_cmd_fdisk: /sbin/fdisk
+
+# Command to crate LVM partition on the disk
+lvm_extend_cmd_partition: >-
+  for CMD in n p 1 '' '' t 8e w; do
+    echo $CMD;
+  done | {{ lvm_extend_cmd_fdisk }}
+
+# Command to create LVM physical volume
+lvm_extend_cmd_pv: /sbin/pvcreate
+
+# Command to extend the LVM volume group
+lvm_extend_cmd_vg: /sbin/vgextend
+
+# Command to display LVM volume groups
+lvm_extend_cmd_vgdisplay: /sbin/vgdisplay
+
+# Command to extend the LVM logical volume
+lvm_extend_cmd_lv: /sbin/lvextend
+
+# Commands required for the swap resizing
+lvm_extend_cmd_mkswap: /sbin/mkswap
+lvm_extend_cmd_swapoff: /sbin/swapoff
+lvm_extend_cmd_swapon: /sbin/swapon
+
+# Command to resize filesystem on a EXT2/3/4 partition
+lvm_extend_cmd_resize_ext: /sbin/resize2fs
