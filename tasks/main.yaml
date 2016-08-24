@@ -25,6 +25,7 @@
 - name: Check we have LVM volume group variable set
   assert:
     that: >
+      lvm_extend_disks.stdout_lines | length == 0 or
       lvm_extend_vg != None and
       lvm_extend_vg | length > 0
 
