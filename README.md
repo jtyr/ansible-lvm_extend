@@ -20,14 +20,17 @@ Examples
 - name: Example of how to use this role
   hosts: all
   vars:
-    # Desired swap LV size
-    lvm_extend_swap_size: 2G
-
     # LV configuration
     lvm_extend_config:
+      # Resize the swap to 2G
       - path: /dev/mapper/{{ lvm_extend_vg }}-swap
-        size: "{{ lvm_extend_swap_size }}"
+        size: 2G
         type: swap
+      # Resize the home partition using XFS to 20G
+      - path: "/dev/mapper/{{ lvm_extend_vg }}-home"
+        size: 20G
+        type: xfs
+      # Resize the root partition using EXT 2/3/4 to fill the rest of the space
       - path: "/dev/mapper/{{ lvm_extend_vg }}-root"
         type: ext
   roles:
@@ -40,14 +43,13 @@ Examples
     # If there is more VGs, we can define the correct one like this:
     lvm_extend_vg: vg1
 
-    # Desired swap LV size
-    lvm_extend_swap_size: 2G
-
     # LV configuration
     lvm_extend_config:
+      # Resize the swap to 2G
       - path: /dev/mapper/{{ lvm_extend_vg }}-swap
-        size: "{{ lvm_extend_swap_size }}"
+        size: 2G
         type: swap
+      # Resize the root partition using EXT4 to fill the rest of the space
       - path: "/dev/mapper/{{ lvm_extend_vg }}-root"
         type: ext
   roles:
@@ -149,8 +151,16 @@ lvm_extend_cmd_mkswap: /sbin/mkswap
 lvm_extend_cmd_swapoff: /sbin/swapoff
 lvm_extend_cmd_swapon: /sbin/swapon
 
-# Command to resize filesystem on a EXT2/3/4 partition
-lvm_extend_cmd_resize_ext: /sbin/resize2fs
+# Command to grow EXT 2/3/4 filesystem
+lvm_extend_cmd_grow_ext: /sbin/resize2fs
+
+# Command to grow XFS filesystem
+lvm_extend_cmd_grow_xfs: /sbin/xfs_growfs
+
+# Data structure allowing to pick the right tool depending in the item.type
+lvm_extend_cmd_grow:
+  ext: "{{ lvm_extend_cmd_grow_ext }}"
+  xfs: "{{ lvm_extend_cmd_grow_xfs }}"
 ```
 
 

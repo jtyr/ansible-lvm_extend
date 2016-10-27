@@ -66,5 +66,13 @@ lvm_extend_cmd_mkswap: /sbin/mkswap
 lvm_extend_cmd_swapoff: /sbin/swapoff
 lvm_extend_cmd_swapon: /sbin/swapon
 
-# Command to resize filesystem on a EXT2/3/4 partition
-lvm_extend_cmd_resize_ext: /sbin/resize2fs
+# Command to grow EXT 2/3/4 filesystem
+lvm_extend_cmd_grow_ext: /sbin/resize2fs
+
+# Command to grow XFS filesystem
+lvm_extend_cmd_grow_xfs: /sbin/xfs_growfs
+
+# Data structure allowing to pick the right tool depending in the item.type
+lvm_extend_cmd_grow:
+  ext: "{{ lvm_extend_cmd_grow_ext }}"
+  xfs: "{{ lvm_extend_cmd_grow_xfs }}"

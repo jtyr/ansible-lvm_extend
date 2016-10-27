@@ -83,10 +83,10 @@
     item.type == 'swap'
   with_items: "{{ lvm_extend_config }}"
 
-- name: Resize filesystem - ext type
+- name: Resize filesystem - EXT or XFS type
   shell: >
-    {{ lvm_extend_cmd_resize_ext }} {{ item.path }}
+    {{ lvm_extend_cmd_grow[item.type] }} {{ item.path }}
   when: >
     lvm_extend_disks.stdout_lines | length > 0 and
-    item.type == 'ext'
+    item.type in ['ext', 'xfs']
   with_items: "{{ lvm_extend_config }}"
