@@ -6,29 +6,6 @@
   register: lvm_extend_disks
   changed_when: false
 
-- name: Autodetect the LVM volume group name
-  shell: >
-    {{ lvm_extend_cmd_autodetect }}
-  register: lvm_extend_autodetect_result
-  when: >
-    lvm_extend_disks.stdout_lines | length > 0 and
-    lvm_extend_vg == None
-  changed_when: false
-
-- name: Register autodetected LVM volume group variable
-  set_fact:
-    lvm_extend_vg: "{{ lvm_extend_autodetect_result.stdout }}"
-  when: >
-    lvm_extend_autodetect_result is defined and
-    'stdout' in lvm_extend_autodetect_result
-
-- name: Check we have LVM volume group variable set
-  assert:
-    that: >
-      lvm_extend_disks.stdout_lines | length == 0 or
-      lvm_extend_vg != None and
-      lvm_extend_vg | length > 0
-
 - name: Format the disks
   shell: >
     {{ lvm_extend_cmd_partition }} /dev/{{ item }}
@@ -36,57 +13,10 @@
 
 - name: Create LVM physical volumes
   shell: >
-    {{ lvm_extend_cmd_pv }} /dev/{{ item }}1
+    {{ lvm_extend_cmd_pvcreate }} /dev/{{ item }}1
   with_items: "{{ lvm_extend_disks.stdout_lines }}"
 
-- name: Extend the LVM volume group
-  shell: >
-    {{ lvm_extend_cmd_vg }} {{ lvm_extend_vg }} /dev/{{ item }}1
-  with_items: "{{ lvm_extend_disks.stdout_lines }}"
-
-- name: Extend LVM logical volumes with specified size
-  shell: >
-    {{ lvm_extend_cmd_lv }}
-    --size {{ item.size }}
-    {{ item.path }} {{
-      item.pv | default (
-        lvm_extend_disks.stdout |
-        regex_replace('sd', '/dev/sd') |
-        regex_replace('\n', '1 ') |
-        regex_replace('$', '1 ')) }}
-  when: >
-    lvm_extend_disks.stdout_lines | length > 0 and
-    'size' in item
-  with_items: "{{ lvm_extend_config }}"
-
-- name: Extend LVM logical volume without size to fill the rest of the space
-  shell: >
-    {{ lvm_extend_cmd_lv }}
-    {{ item.path }} {{
-      item.pv | default (
-        lvm_extend_disks.stdout |
-        regex_replace('sd', '/dev/sd') |
-        regex_replace('\n', '1 ') |
-        regex_replace('$', '1 ')) }}
-  when: >
-    lvm_extend_disks.stdout_lines | length > 0 and
-    'size' not in item
-  with_items: "{{ lvm_extend_config }}"
-
-- name: Resize filesystem - swap type
-  shell: >
-    {{ lvm_extend_cmd_swapoff }} {{ item.path }} &&
-    {{ lvm_extend_cmd_mkswap }} {{ item.path }} &&
-    {{ lvm_extend_cmd_swapon }} {{ item.path }}
-  when: >
-    lvm_extend_disks.stdout_lines | length > 0 and
-    item.type == 'swap'
-  with_items: "{{ lvm_extend_config }}"
-
-- name: Resize filesystem - EXT or XFS type
-  shell: >
-    {{ lvm_extend_cmd_grow[item.type] }} {{ item.path }}
-  when: >
-    lvm_extend_disks.stdout_lines | length > 0 and
-    item.type in ['ext', 'xfs']
-  with_items: "{{ lvm_extend_config }}"
+- include: vg.yaml
+  with_dict: "{{ lvm_extend_config }}"
+  loop_control:
+    loop_var: lvm_extend_vg
