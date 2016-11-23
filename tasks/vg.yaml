@@ -10,10 +10,11 @@
 
 - name: Create LVM volume group
   shell: >
-    {{ lvm_extend_cmd_vgcreate }} {{ lvm_extend_vg.key }} /dev/{{ lvm_extend_vg.value.disks | join('1 /dev/') }}1
+    {{ lvm_extend_cmd_vgcreate }} {{ lvm_extend_vg.key }} /dev/{{ lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | join('1 /dev/') }}1
   when: >
     lvm_extend_vg_exists is defined and
-    lvm_extend_vg_exists.rc > 0
+    lvm_extend_vg_exists.rc > 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0
 
 - name: Extend LVM volume group
   shell: >
@@ -53,10 +54,11 @@
     {{ lvm_extend_cmd_lvextend }}
     --size {{ item.size }}
     /dev/{{ lvm_extend_vg.key }}/{{ item.name }} {{
-    item.pv | default('/dev/' + (lvm_extend_vg.value.disks | join('1 /dev/')) + '1') }}
+    item.pv | default('/dev/' + (lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | join('1 /dev/')) + '1') }}
   when: >
     lvm_extend_vg_exists is defined and
     lvm_extend_vg_exists.rc == 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0 and
     'size' in item
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
@@ -64,10 +66,11 @@
   shell: >
     {{ lvm_extend_cmd_lvextend }}
     /dev/{{ lvm_extend_vg.key }}/{{ item.name }} {{
-    item.pv | default('/dev/' + (lvm_extend_vg.value.disks | join('1 /dev/')) + '1') }}
+    item.pv | default('/dev/' + (lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | join('1 /dev/')) + '1') }}
   when: >
     lvm_extend_vg_exists is defined and
     lvm_extend_vg_exists.rc == 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0 and
     'size' not in item
   with_items: "{{ lvm_extend_vg.value.vols }}"
 

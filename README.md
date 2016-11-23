@@ -67,7 +67,7 @@ Examples
 
 If something goes wrong before the filesystem resizing finished, you can fix it
 by removing the physical volume (`pvremove /dev/sdX`), removing the disk
-partitions (`for CMD in d w; do echo $N; done | fdisk /dev/sdX`) and starting
+partitions (`for CMD in d w; do echo $CMD; done | fdisk /dev/sdX`) and starting
 the process again.
 
 
