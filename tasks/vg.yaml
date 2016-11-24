@@ -1,5 +1,15 @@
 ---
 
+- name: Format the disks ({{ lvm_extend_vg.key }})
+  shell: >
+    {{ lvm_extend_cmd_partition }} /dev/{{ item }}
+  with_items: "{{ lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) }}"
+
+- name: Create LVM physical volumes ({{ lvm_extend_vg.key }})
+  shell: >
+    {{ lvm_extend_cmd_pvcreate }} /dev/{{ item }}1
+  with_items: "{{ lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) }}"
+
 - name: Check if the LVM volume group exists
   shell: "{{ lvm_extend_cmd_detect_vg }}"
   failed_when: false
@@ -8,7 +18,7 @@
   when: >
     lvm_extend_disks.stdout_lines | length > 0
 
-- name: Create LVM volume group
+- name: Create LVM volume group ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_vgcreate }} {{ lvm_extend_vg.key }} /dev/{{ lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | join('1 /dev/') }}1
   when: >
@@ -16,7 +26,7 @@
     lvm_extend_vg_exists.rc > 0 and
     lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0
 
-- name: Extend LVM volume group
+- name: Extend LVM volume group ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_vgextend }} {{ lvm_extend_vg.key }} /dev/{{ item }}1
   when: >
@@ -25,7 +35,7 @@
     item in lvm_extend_vg.value.disks
   with_items: "{{ lvm_extend_disks.stdout_lines }}"
 
-- name: Create LVM logical volumes with specified size
+- name: Create LVM logical volumes with specified size ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_lvcreate }}
     -n {{ item.name }}
@@ -34,10 +44,11 @@
   when: >
     lvm_extend_vg_exists is defined and
     lvm_extend_vg_exists.rc > 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0 and
     'size' in item
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
-- name: Create LVM logical volumes without size to fill the rest of the space
+- name: Create LVM logical volumes without size to fill the rest of the space ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_lvcreate }}
     -n {{ item.name }}
@@ -46,10 +57,11 @@
   when: >
     lvm_extend_vg_exists is defined and
     lvm_extend_vg_exists.rc > 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0 and
     'size' not in item
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
-- name: Extend LVM logical volumes with specified size
+- name: Extend LVM logical volumes with specified size ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_lvextend }}
     --size {{ item.size }}
@@ -62,7 +74,7 @@
     'size' in item
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
-- name: Extend LVM logical volume without size to fill the rest of the space
+- name: Extend LVM logical volume without size to fill the rest of the space ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_lvextend }}
     /dev/{{ lvm_extend_vg.key }}/{{ item.name }} {{
@@ -74,7 +86,7 @@
     'size' not in item
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
-- name: Create or resize filesystem - swap type
+- name: Create or resize filesystem - swap type ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_swapoff }} /dev/{{ lvm_extend_vg.key }}/{{ item.name }} &&
     {{ lvm_extend_cmd_mkswap }} -f /dev/{{ lvm_extend_vg.key }}/{{ item.name }} &&
@@ -82,37 +94,40 @@
   when: >
     lvm_extend_vg_exists is defined and
     lvm_extend_vg_exists.rc >= 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0 and
     'type' in item and
     item.type == 'swap'
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
-- name: Create filesystem - non-swap type
+- name: Create filesystem - non-swap type ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_create[item.type | default(lvm_extend_default_fs_type)] }}
     /dev/{{ lvm_extend_vg.key }}/{{ item.name }}
   when: >
     lvm_extend_vg_exists is defined and
     lvm_extend_vg_exists.rc > 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0 and
     (item.type | default(lvm_extend_default_fs_type)) in lvm_extend_cmd_grow
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
-- name: Resize filesystem - non-swap type
+- name: Resize filesystem - non-swap type ({{ lvm_extend_vg.key }})
   shell: >
     {{ lvm_extend_cmd_grow[item.type | default(lvm_extend_default_fs_type)] }}
     /dev/{{ lvm_extend_vg.key }}/{{ item.name }}
   when: >
     lvm_extend_vg_exists is defined and
     lvm_extend_vg_exists.rc == 0 and
+    lvm_extend_vg.value.disks | intersect(lvm_extend_disks.stdout_lines) | length > 0 and
     (item.type | default(lvm_extend_default_fs_type)) in lvm_extend_cmd_grow
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
-- name: Check if the data mount point exists
+- name: Check if the data mount point exists ({{ lvm_extend_vg.key }})
   stat:
     path: /dev/{{ lvm_extend_vg.key }}/{{ item.name }}
   with_items: "{{ lvm_extend_vg.value.vols }}"
   register: lvm_extend_data_mntpoint_exists
 
-- name: Mount volume
+- name: Mount volume ({{ lvm_extend_vg.key }})
   mount:
     name: "{{ item.mount.dir | default('/mnt/' + item.name) }}"
     src: /dev/{{ lvm_extend_vg.key }}/{{ item.name }}

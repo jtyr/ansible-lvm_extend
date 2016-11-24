@@ -6,16 +6,6 @@
   register: lvm_extend_disks
   changed_when: false
 
-- name: Format the disks
-  shell: >
-    {{ lvm_extend_cmd_partition }} /dev/{{ item }}
-  with_items: "{{ lvm_extend_disks.stdout_lines }}"
-
-- name: Create LVM physical volumes
-  shell: >
-    {{ lvm_extend_cmd_pvcreate }} /dev/{{ item }}1
-  with_items: "{{ lvm_extend_disks.stdout_lines }}"
-
 - include: vg.yaml
   with_dict: "{{ lvm_extend_config }}"
   loop_control:
