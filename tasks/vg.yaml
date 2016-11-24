@@ -106,6 +106,12 @@
     (item.type | default(lvm_extend_default_fs_type)) in lvm_extend_cmd_grow
   with_items: "{{ lvm_extend_vg.value.vols }}"
 
+- name: Check if the data mount point exists
+  stat:
+    path: /dev/{{ lvm_extend_vg.key }}/{{ item.name }}
+  with_items: "{{ lvm_extend_vg.value.vols }}"
+  register: lvm_extend_data_mntpoint_exists
+
 - name: Mount volume
   mount:
     name: "{{ item.mount.dir | default('/mnt/' + item.name) }}"
@@ -118,7 +124,8 @@
     opts: "{{ item.mount.opts | default(lvm_extend_mount_opts) }}"
     state: mounted
   when: >
-    'mount' in item
+    'mount' in item and
+    item.name | in_loop_list(lvm_extend_data_mntpoint_exists, ['name'])
   with_items: "{{ lvm_extend_vg.value.vols }}"
   tags:
     - lvm_extend_mount
