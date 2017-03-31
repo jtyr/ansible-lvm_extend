@@ -15,8 +15,6 @@
   failed_when: false
   changed_when: false
   register: lvm_extend_vg_exists
-  when: >
-    lvm_extend_disks.stdout_lines | length > 0
 
 - name: Create LVM volume group ({{ lvm_extend_vg.key }})
   shell: >

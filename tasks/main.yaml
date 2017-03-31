@@ -7,6 +7,8 @@
   changed_when: false
 
 - include: vg.yaml
+  when: >
+    lvm_extend_disks.stdout_lines | length > 0
   with_dict: "{{ lvm_extend_config }}"
   loop_control:
     loop_var: lvm_extend_vg
