@@ -76,7 +76,7 @@ Role variables
 
 ```
 # Default set of LVM logical vlumes to be extended
-lvm_extend_config__default: []
+lvm_extend_config__default: {}
 # Example:
 #lvm_extend_config__default:
 #  # This is the VG name
@@ -98,12 +98,12 @@ lvm_extend_config__default: []
 #      - name: root
 
 # Custom set of LVM logical volumes to be extended
-lvm_extend_config__custom: []
+lvm_extend_config__custom: {}
 
 # Final set of LVM logical volumes to be extended
 lvm_extend_config: "{{
-  lvm_extend_config__default +
-  lvm_extend_config__custom }}"
+  lvm_extend_config__default.update(lvm_extend_config__custom) }}{{
+  lvm_extend_config__default }}"
 
 # Disk pattern used to detect empty disks
 lvm_extend_cmd_new_disks_pattern: sd.*
