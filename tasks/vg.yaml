@@ -139,6 +139,8 @@
     path: /dev/{{ lvm_extend_vg.key }}/{{ item.name }}
   with_items: "{{ lvm_extend_vg.value.vols }}"
   register: lvm_extend_data_mntpoint_exists
+  tags:
+    - lvm_extend_mount
 
 - name: Mount volume ({{ lvm_extend_vg.key }})
   mount:
@@ -154,6 +156,24 @@
   when: >
     'mount' in item and
     item.name | in_loop_list(lvm_extend_data_mntpoint_exists, ['name'])
+  with_items: "{{ lvm_extend_vg.value.vols }}"
+  tags:
+    - lvm_extend_mount
+
+- name: Change permissions of the mount point ({{ item.mount.dir | default('/mnt/' + item.name) }})
+  file:
+    path: "{{ item.mount.dir | default('/mnt/' + item.name) }}"
+    state: directory
+    owner: "{{ item.owner | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    mode: "{{ item.mode | default(omit) }}"
+  when: >
+    'mount' in item and
+    (
+        'owner' in item or
+        'group' in item or
+        'mode' in item
+    )
   with_items: "{{ lvm_extend_vg.value.vols }}"
   tags:
     - lvm_extend_mount
