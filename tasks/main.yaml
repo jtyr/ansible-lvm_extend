@@ -6,7 +6,7 @@
   register: lvm_extend_disks
   changed_when: false
 
-- include: vg.yaml
+- include_tasks: vg.yaml
   with_dict: "{{ lvm_extend_config }}"
   loop_control:
     loop_var: lvm_extend_vg
