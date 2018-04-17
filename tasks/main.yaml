@@ -1,5 +1,11 @@
 ---
 
+- name: Install LVM tools
+  package:
+    name: "{{ lvm_extend_pkg }}"
+  tags:
+    - lvm_extend_pkg
+
 - name: Detect empty disks
   shell: >
     {{ lvm_extend_cmd_new }}

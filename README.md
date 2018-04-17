@@ -75,6 +75,9 @@ Role variables
 --------------
 
 ```
+# Package containing LVM tools
+lvm_extend_pkg: lvm2
+
 # Default set of LVM logical vlumes to be extended
 lvm_extend_config__default: {}
 # Example:

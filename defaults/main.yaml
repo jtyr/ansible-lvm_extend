@@ -1,5 +1,8 @@
 ---
 
+# Package containing LVM tools
+lvm_extend_pkg: lvm2
+
 # Default set of LVM logical vlumes to be extended
 lvm_extend_config__default: {}
 # Example:
@@ -102,7 +105,20 @@ lvm_extend_cmd_grow:
   xfs: "{{ lvm_extend_cmd_grow_xfs }}"
 
 # Default filesystem type
-lvm_extend_default_fs_type: ext
+lvm_extend_default_fs_type: "{{
+  'xfs'
+    if (
+      (
+        ansible_os_family == 'RedHat' and
+        ansible_distribution_major_version | int >= 7
+      ) or (
+        ansible_distribution == 'Ubuntu' and
+        ansible_distribution_major_version | int >= 16
+      )
+    )
+    else
+  'ext'
+}}"
 
 # Default mount options
 lvm_extend_mount_opts: defaults

@@ -4,12 +4,21 @@ galaxy_info:
   author: Jiri Tyr
   description: A role that creates and extends LVM volumes.
   license: MIT
-  min_ansible_version: 2.2
+  min_ansible_version: 2.4
   platforms:
     - name: EL
       versions:
         - 6
         - 7
-  categories:
+    - name: Debian
+      versions:
+        - stretch
+        - buster
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+  galaxy_tags:
     - system
+    - storage
 dependencies: []
