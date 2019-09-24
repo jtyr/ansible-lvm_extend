@@ -10,11 +10,19 @@ specified by the `pv` parameter of the configuration (see examples). Only swap,
 EXT2/3/4 and XFS filesystems are currently supported. This role must be run as
 root or via sudo (`--become`).
 
+The configuration of the role is done in such way that it should not be necessary
+to change the role for any kind of configuration. All can be done either by
+changing role parameters or by declaring completely new configuration as a
+variable. That makes this role absolutely universal. See the examples below for
+more details.
+
+Please report any issues or send PR.
+
 
 Examples
 --------
 
-```
+```yaml
 ---
 
 - name: Example of how to use this role
@@ -74,7 +82,7 @@ the process again.
 Role variables
 --------------
 
-```
+```yaml
 # Package containing LVM tools
 lvm_extend_pkg: lvm2
 
@@ -180,7 +188,20 @@ lvm_extend_cmd_grow:
   xfs: "{{ lvm_extend_cmd_grow_xfs }}"
 
 # Default filesystem type
-lvm_extend_default_fs_type: ext
+lvm_extend_default_fs_type: "{{
+  'xfs'
+    if (
+      (
+        ansible_facts.os_family == 'RedHat' and
+        ansible_facts.distribution_major_version | int >= 7
+      ) or (
+        ansible_facts.distribution == 'Ubuntu' and
+        ansible_facts.distribution_major_version | int >= 16
+      )
+    )
+    else
+  'ext'
+}}"
 
 # Default mount options
 lvm_extend_mount_opts: defaults

@@ -30,8 +30,8 @@ lvm_extend_config__custom: {}
 
 # Final set of LVM logical volumes to be extended
 lvm_extend_config: "{{
-  lvm_extend_config__default.update(lvm_extend_config__custom) }}{{
-  lvm_extend_config__default }}"
+  lvm_extend_config__default | combine(
+  lvm_extend_config__custom) }}"
 
 # Disk pattern used to detect empty disks
 lvm_extend_cmd_new_disks_pattern: sd.*
@@ -109,11 +109,11 @@ lvm_extend_default_fs_type: "{{
   'xfs'
     if (
       (
-        ansible_os_family == 'RedHat' and
-        ansible_distribution_major_version | int >= 7
+        ansible_facts.os_family == 'RedHat' and
+        ansible_facts.distribution_major_version | int >= 7
       ) or (
-        ansible_distribution == 'Ubuntu' and
-        ansible_distribution_major_version | int >= 16
+        ansible_facts.distribution == 'Ubuntu' and
+        ansible_facts.distribution_major_version | int >= 16
       )
     )
     else
