@@ -113,8 +113,8 @@ lvm_extend_config__custom: {}
 
 # Final set of LVM logical volumes to be extended
 lvm_extend_config: "{{
-  lvm_extend_config__default.update(lvm_extend_config__custom) }}{{
-  lvm_extend_config__default }}"
+  lvm_extend_config__default | combine(
+  lvm_extend_config__custom) }}"
 
 # Disk pattern used to detect empty disks
 lvm_extend_cmd_new_disks_pattern: sd.*
@@ -181,6 +181,9 @@ lvm_extend_cmd_grow_ext: /sbin/resize2fs
 
 # Command to grow XFS filesystem
 lvm_extend_cmd_grow_xfs: /sbin/xfs_growfs
+
+lvm_extend_cmd_mountpoint: >
+  env mount -l | grep '^/dev/mapper/%s-%s\s' | head -n1 | cut -f3 -d' '
 
 # Data structure allowing to pick the right tool fro FS growing
 lvm_extend_cmd_grow:
