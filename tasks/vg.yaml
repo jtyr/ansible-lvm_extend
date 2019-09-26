@@ -180,7 +180,7 @@
   tags:
     - lvm_extend_mount
 
-- name: Change permissions of the mount point ({{ item.mount.dir | default('/mnt/' + item.name) }})
+- name: Change permissions of the mount point ({{ lvm_extend_vg.key }})
   file:
     path: "{{ item.mount.dir | default('/mnt/' + item.name) }}"
     state: directory
