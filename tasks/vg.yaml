@@ -98,7 +98,7 @@
 
 - name: Create or resize filesystem - swap type ({{ lvm_extend_vg.key }})
   shell: >
-    {{ lvm_extend_cmd_swapoff }} /dev/{{ lvm_extend_vg.key }}/{{ item.name }} &&
+    {{ lvm_extend_cmd_swapoff }} /dev/{{ lvm_extend_vg.key }}/{{ item.name }} || true &&
     {{ lvm_extend_cmd_mkswap }} -f /dev/{{ lvm_extend_vg.key }}/{{ item.name }} &&
     {{ lvm_extend_cmd_swapon }} /dev/{{ lvm_extend_vg.key }}/{{ item.name }}
   when: >
